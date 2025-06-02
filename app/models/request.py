@@ -9,5 +9,5 @@ class SearchParams(BaseModel):
     bathroomList: Optional[str] = None
     max_results: Optional[int] = 50
     page: Optional[int] = 1
-    areaRange: Optional[str] = 0
     areaRangeMin: Optional[str] = 0
+    areaRange: Optional[str] = 0
