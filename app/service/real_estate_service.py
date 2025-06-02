@@ -38,25 +38,19 @@ def buscar_inmuebles_service(params:SearchParams, max_results=50, page=1):
     data = response.json()
     results = data.get("results", [])
 
-    filtered_results = [r for r in results if r.get("areaPrivada") is not None]
 
     results_per_page = 5
     start = (page - 1) * results_per_page
     end = start + results_per_page
-    paged_results = filtered_results[start:end]
 
     base_url = "https://www.metrocuadrado.com"
     final_output = []
+    print(5 - 5)
+     
+    max_data = page * 5
+    min_data = max_data - 5
 
-    for r in paged_results:
-        final_output.append({
-            "titulo": r.get("title"),
-            "tipo_inmueble": r.get("mtipoinmueble", {}).get("nombre"),
-            "cuartos": r.get("mnrocuartos"),
-            "baños": r.get("mnrobanos"),
-            "garajes": r.get("mnrogarajes"),
-            "area_privada": r.get("areaPrivada"),
-            "url": base_url + r.get("link", "")
-        })
+    for r in results[min_data:max_data]:
+        r["link"] = base_url + r.get("link", "")
 
-    return final_output
+    return results[min_data:max_data]
