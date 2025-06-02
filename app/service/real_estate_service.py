@@ -20,7 +20,9 @@ def buscar_inmuebles_service(params:SearchParams, max_results=50, page=1):
         "from": "0",
         "realEstateTypeList": params.realEstateTypeList,
         "realEstateBusinessList": params.realEstateBusinessList,
-        "city": params.city
+        "city": params.city,
+        "areaRange": params.areaRange,
+        "areaRange": params.areaRangeMin
     }
 
     if params.roomList:
