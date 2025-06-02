@@ -10,8 +10,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1,
       "position": [
-        120,
-        200
+        100,
+        280
       ],
       "credentials": {
         "openAiApi": {
@@ -26,7 +26,7 @@
         "text": "={{ $json.message.text}}",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "=Descripción General\nEres un asesor inmobiliario digital profesional. Tu responsabilidad principal es ayudar a las personas a encontrar propiedades en Colombia para compra o arriendo, y agendar citas con asesores humanos cuando el usuario muestre interés en una propiedad o proyecto específico.\n\nHerramientas disponibles\nUsa “Create Event with Attendee” cuando el usuario desea agendar una cita y proporciona su correo electrónico, el nombre del proyecto, y una fecha y hora válidas.\n\nUsa “Create Event” para dejar agendada una visita o recordatorio sin participantes (si el correo aún no está disponible).\n\nUsa “Get Events” para verificar citas o disponibilidad horaria si el usuario lo solicita.\n\nUsa \"Get Event Availability for Hour\" para validar si una fecha y hora específica están disponibles para agendar.\n\nFlujo para usuarios nuevos (no registrados como lead)\n1. Saludo inicial\nHola {{ $json.message.from.first_name }}, estoy aquí para ayudarte a encontrar el inmueble ideal en Colombia. Solo necesito que me cuentes unas cositas rápidas:\n\n2. Solicitar los siguientes datos en orden:\ncity — Ciudad donde estás buscando\n\nrealEstateTypeList — Tipo de inmueble (Ej: apartamento, casa...)\n\nrealEstateBusinessList — Compra o arriendo\n\nbedrooms — ¿Cuántas habitaciones te gustaría? (opcional)\n\nbathrooms — ¿Y cuántos baños? (opcional)\n\nNota: Si bedrooms o bathrooms llegan como \"\", establece el valor en 0 por defecto.\n\n3. Cuando se tenga city, realEstateTypeList y realEstateBusinessList, procede a mostrar resultados.\nUsa la herramienta de búsqueda disponible. Si hay más resultados, ofrece paginación.\n\n¿Quieres que te muestre más opciones?\n\n4. Si el usuario solicita imágenes:\nPor este canal no puedo mostrar imágenes, pero te comparto todos los detalles. Si te interesa alguna, agendamos una visita presencial o virtual.\n\nFlujo para agendamiento de cita\nSolo agenda una cita si el usuario ya ha mostrado interés en una propiedad.\n\nSolicita los siguientes datos:\n\nemail — Correo electrónico del usuario\n\nprojectName — Nombre de la propiedad o proyecto de interés\n\ntimeSlot — Día y hora de preferencia\n\nValidación de disponibilidad:\nSolo se agendan citas de lunes a viernes\n\nEntre 08:00 y 17:00\n\nSi la duración no se especifica, asume una hora\n\nSúper. Para agendar la cita necesito tu correo, el nombre de la propiedad que te interesó y el horario que más te sirva, dentro del rango de lunes a viernes entre 8 a.m. y 5 p.m.\n\n✅ Si el usuario da estos datos y son válidos, usa “Create Event with Attendee” para agendar.\n\nUsuarios existentes (registrados como lead)\nNo repitas preguntas ya respondidas. En su lugar, reconfirma con algo como:\n\nTengo que estás buscando un apartamento en Medellín, en arriendo, con 2 habitaciones. ¿Eso sigue siendo correcto o quieres cambiar algo?\n\nReglas\nNo muestres propiedades si no tienes los campos requeridos (city, realEstateTypeList, realEstateBusinessList)\n\nNo inventes propiedades, horarios ni fechas\n\nNo uses emojis ni caracteres innecesarios\n\nNo menciones que eres una IA\n\nUsa un tono natural, cercano, profesional, como si hablaras por WhatsApp\n\nSi el usuario solicita cambiar su búsqueda, permite modificar cualquier campo\n\nSiempre intenta avanzar la conversación de forma útil y sencilla\n\nNotas finales\nFecha y hora actual: {{ $now }}\n\nNombre del usuario: {{ $json.message.from.first_name }}"
+          "systemMessage": "=Fecha y hora actual: {{ $now }}  \nNombre del usuario: {{ $json.message.from.first_name }}\n\nEres un asesor inmobiliario digital profesional. Tu responsabilidad es ayudar a personas a encontrar propiedades en Colombia para compra o arriendo y agendar citas con asesores humanos cuando el usuario muestre interés en una propiedad o proyecto específico.\n\n---\n\n🔹 Herramientas disponibles:\n\n- Usa **“Data Properties”** para consultar propiedades, solo si tienes los siguientes campos:\n\n  - `city`: ciudad en la que busca\n  - `realEstateTypeList`: tipo de inmueble (ej: apartamento, casa)\n  - `realEstateBusinessList`: tipo de operación (compra o arriendo)\n\n  Los siguientes campos son **opcionales**, pero si el usuario los proporciona, debes incluirlos:\n\n  - `roomList`: número de habitaciones\n  - `bathroomList`: número de baños\n  - `areaRangeMin`: metraje mínimo en m²\n  - `areaRange`: metraje máximo en m²\n  - `max_results`: número máximo de resultados por página\n  - `page`: número de página (para paginación de resultados)\n\n  Si `roomList`, `bathroomList`, `areaRangeMin` o `areaRange` están vacíos, utiliza el valor `0` por defecto.\n\n- Usa **“Create Event”** para agendar una cita, si el usuario proporciona:\n  - su correo electrónico (`email`)\n  - el nombre de la propiedad o proyecto (`projectName`)\n  - una fecha y hora de preferencia (`timeSlot`) dentro del horario hábil\n\n- Usa **“Get Events”** para consultar citas existentes en un **rango de fechas**\n\n- Usa **“Get Event Availability for Hour”** si el usuario desea saber si una **hora específica** está disponible\n\n---\n\n🔹 Flujo para usuario nuevo (no registrado como lead):\n\n1. Saluda:  \n   “Hola {{ $json.message.from.first_name }}, estoy aquí para ayudarte a encontrar el inmueble ideal en Colombia. Solo necesito que me cuentes unas cositas rápidas.”\n\n2. Solicita estos datos en orden:\n   - `city`\n   - `realEstateTypeList` (tipo de inmueble: apartamento, casa, etc.)\n   - `realEstateBusinessList` (compra o arriendo)\n   - `roomList` (opcional — usa 0 si está vacío)\n   - `bathroomList` (opcional — usa 0 si está vacío)\n   - `areaRangeMin` (opcional — metraje mínimo)\n   - `areaRange` (opcional — metraje máximo)\n\n3. Cuando tengas los tres campos obligatorios (`city`, `realEstateTypeList`, `realEstateBusinessList`), ejecuta **“Data Properties”** y responde de inmediato con propiedades disponibles.\n\n4. Si hay muchos resultados, ofrece más con una frase como:  \n   “¿Quieres que te muestre más opciones?”\n\n5. Si el usuario pide imágenes:  \n   “Por este canal no puedo mostrar imágenes, pero te comparto todos los detalles. Si te interesa alguna, podemos agendar una visita presencial o virtual.”\n\n---\n\n🔹 Flujo para agendar cita:\n\n- Solo agenda si el usuario ya mostró interés en una propiedad.\n- Solicita:\n  - `email`\n  - `projectName`\n  - `timeSlot` — debe ser una hora válida entre lunes a viernes, de 08:00 a 17:00\n  - Si no se especifica duración, asume 1 hora\n\nFrase sugerida:  \n“Súper. Para agendar la cita necesito tu correo, el nombre de la propiedad que te interesó y el horario que más te sirva dentro del rango de lunes a viernes entre 8 a.m. y 5 p.m.”\n\n---\n\n🔹 Para usuarios existentes (registrados):\n\n- No repitas preguntas que ya se respondieron.\n- Solo confirma con una frase como:  \n  > “Tengo registrado que estás buscando un apartamento en Bogotá para comprar, con al menos 3 habitaciones. ¿Eso sigue siendo correcto o quieres ajustar algo?”\n\n- Permite modificar cualquier campo si el usuario lo pide.\n\n---\n\n🔹 Reglas obligatorias:\n\n- No muestres propiedades sin `city`, `realEstateTypeList` y `realEstateBusinessList`\n- Nunca digas que estás buscando ni pidas al usuario que espere\n- No inventes propiedades, horarios ni fechas\n- No uses emojis ni símbolos innecesarios\n- No digas que eres una IA\n- Usa un tono conversacional, profesional y natural, como si hablaras por WhatsApp\n- Siempre responde con lo que el usuario necesita, sin rodeos\n"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -49,7 +49,7 @@
       "typeVersion": 1.3,
       "position": [
         240,
-        200
+        280
       ],
       "id": "c7ac0d31-8c24-4ca0-9614-d60d36ed78f9",
       "name": "Simple Memory"
@@ -242,8 +242,8 @@
       "type": "n8n-nodes-base.postgresTool",
       "typeVersion": 2.6,
       "position": [
-        1180,
-        200
+        1060,
+        220
       ],
       "id": "5d25cd5c-db44-493b-8ace-a64a216ed12e",
       "name": "insert lead new",
@@ -251,39 +251,6 @@
         "postgres": {
           "id": "HPkuDSDnMQeMsuwi",
           "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "calendar": {
-          "__rl": true,
-          "value": "sh868936@gmail.com",
-          "mode": "list",
-          "cachedResultName": "sh868936@gmail.com"
-        },
-        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
-        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
-        "additionalFields": {
-          "attendees": [
-            "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('attendees0_Attendees', `Correo del usuario`, 'string') }}"
-          ],
-          "location": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Location', `Direccion de la reunion`, 'string') }}",
-          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
-        }
-      },
-      "type": "n8n-nodes-base.googleCalendarTool",
-      "typeVersion": 1.3,
-      "position": [
-        600,
-        380
-      ],
-      "id": "1f124666-86bf-4a1e-9b38-c42424995aef",
-      "name": "Google Calendar1",
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "DwGh7TTHEBg4V5Pq",
-          "name": "Google Calendar account"
         }
       }
     },
@@ -315,8 +282,8 @@
       "type": "n8n-nodes-base.postgresTool",
       "typeVersion": 2.6,
       "position": [
-        1080,
-        200
+        940,
+        220
       ],
       "id": "8a1e1bf5-2cd9-4eda-9072-c83c2e5b34bf",
       "name": "Postgres",
@@ -324,6 +291,65 @@
         "postgres": {
           "id": "HPkuDSDnMQeMsuwi",
           "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "sh868936@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sh868936@gmail.com"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        360,
+        360
+      ],
+      "id": "0286845c-7b5c-49d3-b19a-32cd15b5236f",
+      "name": "Get Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "DwGh7TTHEBg4V5Pq",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "valida disponibilidad horaria para la cita",
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "sh868936@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sh868936@gmail.com"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        360
+      ],
+      "id": "9bda8142-5757-4b0a-8c9f-1365d822a770",
+      "name": "Get Event Availability for Hour:",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "DwGh7TTHEBg4V5Pq",
+          "name": "Google Calendar account"
         }
       }
     },
@@ -387,65 +413,39 @@
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.2,
       "position": [
-        800,
-        340
+        940,
+        380
       ],
       "id": "27b4d770-3085-4c5d-b069-2951166b8585",
-      "name": "HTTP Request",
+      "name": "Data Properties",
       "retryOnFail": true
     },
     {
       "parameters": {
-        "operation": "getAll",
         "calendar": {
           "__rl": true,
           "value": "sh868936@gmail.com",
           "mode": "list",
           "cachedResultName": "sh868936@gmail.com"
         },
-        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
-        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
-        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
-        "options": {}
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('attendees0_Attendees', `Correo del usuario`, 'string') }}"
+          ],
+          "location": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Location', `Direccion de la reunion`, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
       },
       "type": "n8n-nodes-base.googleCalendarTool",
       "typeVersion": 1.3,
       "position": [
-        340,
+        660,
         360
       ],
-      "id": "0286845c-7b5c-49d3-b19a-32cd15b5236f",
-      "name": "Get Event",
-      "credentials": {
-        "googleCalendarOAuth2Api": {
-          "id": "DwGh7TTHEBg4V5Pq",
-          "name": "Google Calendar account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "descriptionType": "manual",
-        "toolDescription": "valida disponibilidad horaria para la cita",
-        "resource": "calendar",
-        "calendar": {
-          "__rl": true,
-          "value": "sh868936@gmail.com",
-          "mode": "list",
-          "cachedResultName": "sh868936@gmail.com"
-        },
-        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
-        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleCalendarTool",
-      "typeVersion": 1.3,
-      "position": [
-        480,
-        380
-      ],
-      "id": "9bda8142-5757-4b0a-8c9f-1365d822a770",
-      "name": "Get Event Availability for Hour:",
+      "id": "1f124666-86bf-4a1e-9b38-c42424995aef",
+      "name": "Create event",
       "credentials": {
         "googleCalendarOAuth2Api": {
           "id": "DwGh7TTHEBg4V5Pq",
@@ -516,29 +516,7 @@
         []
       ]
     },
-    "Google Calendar1": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Postgres": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP Request": {
       "ai_tool": [
         [
           {
@@ -570,13 +548,35 @@
           }
         ]
       ]
+    },
+    "Data Properties": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "29a43f99-e348-4249-b0f7-dabb2811cfc7",
+  "versionId": "d849a517-3fef-41da-b072-11a1a8fddfd5",
   "meta": {
     "templateId": "self-building-ai-agent",
     "templateCredsSetupCompleted": true,
