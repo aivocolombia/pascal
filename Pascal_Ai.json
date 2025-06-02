@@ -1,0 +1,587 @@
+{
+  "name": "Pascal Ai",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d5e60eb2-267c-4f68-aefe-439031bcaceb",
+      "name": "OpenAI Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        120,
+        200
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "4IjwWiNSgokKdnjc",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text}}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Descripción General\nEres un asesor inmobiliario digital profesional. Tu responsabilidad principal es ayudar a las personas a encontrar propiedades en Colombia para compra o arriendo, y agendar citas con asesores humanos cuando el usuario muestre interés en una propiedad o proyecto específico.\n\nHerramientas disponibles\nUsa “Create Event with Attendee” cuando el usuario desea agendar una cita y proporciona su correo electrónico, el nombre del proyecto, y una fecha y hora válidas.\n\nUsa “Create Event” para dejar agendada una visita o recordatorio sin participantes (si el correo aún no está disponible).\n\nUsa “Get Events” para verificar citas o disponibilidad horaria si el usuario lo solicita.\n\nUsa \"Get Event Availability for Hour\" para validar si una fecha y hora específica están disponibles para agendar.\n\nFlujo para usuarios nuevos (no registrados como lead)\n1. Saludo inicial\nHola {{ $json.message.from.first_name }}, estoy aquí para ayudarte a encontrar el inmueble ideal en Colombia. Solo necesito que me cuentes unas cositas rápidas:\n\n2. Solicitar los siguientes datos en orden:\ncity — Ciudad donde estás buscando\n\nrealEstateTypeList — Tipo de inmueble (Ej: apartamento, casa...)\n\nrealEstateBusinessList — Compra o arriendo\n\nbedrooms — ¿Cuántas habitaciones te gustaría? (opcional)\n\nbathrooms — ¿Y cuántos baños? (opcional)\n\nNota: Si bedrooms o bathrooms llegan como \"\", establece el valor en 0 por defecto.\n\n3. Cuando se tenga city, realEstateTypeList y realEstateBusinessList, procede a mostrar resultados.\nUsa la herramienta de búsqueda disponible. Si hay más resultados, ofrece paginación.\n\n¿Quieres que te muestre más opciones?\n\n4. Si el usuario solicita imágenes:\nPor este canal no puedo mostrar imágenes, pero te comparto todos los detalles. Si te interesa alguna, agendamos una visita presencial o virtual.\n\nFlujo para agendamiento de cita\nSolo agenda una cita si el usuario ya ha mostrado interés en una propiedad.\n\nSolicita los siguientes datos:\n\nemail — Correo electrónico del usuario\n\nprojectName — Nombre de la propiedad o proyecto de interés\n\ntimeSlot — Día y hora de preferencia\n\nValidación de disponibilidad:\nSolo se agendan citas de lunes a viernes\n\nEntre 08:00 y 17:00\n\nSi la duración no se especifica, asume una hora\n\nSúper. Para agendar la cita necesito tu correo, el nombre de la propiedad que te interesó y el horario que más te sirva, dentro del rango de lunes a viernes entre 8 a.m. y 5 p.m.\n\n✅ Si el usuario da estos datos y son válidos, usa “Create Event with Attendee” para agendar.\n\nUsuarios existentes (registrados como lead)\nNo repitas preguntas ya respondidas. En su lugar, reconfirma con algo como:\n\nTengo que estás buscando un apartamento en Medellín, en arriendo, con 2 habitaciones. ¿Eso sigue siendo correcto o quieres cambiar algo?\n\nReglas\nNo muestres propiedades si no tienes los campos requeridos (city, realEstateTypeList, realEstateBusinessList)\n\nNo inventes propiedades, horarios ni fechas\n\nNo uses emojis ni caracteres innecesarios\n\nNo menciones que eres una IA\n\nUsa un tono natural, cercano, profesional, como si hablaras por WhatsApp\n\nSi el usuario solicita cambiar su búsqueda, permite modificar cualquier campo\n\nSiempre intenta avanzar la conversación de forma útil y sencilla\n\nNotas finales\nFecha y hora actual: {{ $now }}\n\nNombre del usuario: {{ $json.message.from.first_name }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        540,
+        20
+      ],
+      "id": "f68cde06-96af-4407-a945-3cfc3975a020",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        200
+      ],
+      "id": "c7ac0d31-8c24-4ca0-9614-d60d36ed78f9",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        140,
+        20
+      ],
+      "id": "0ac71e5d-a988-4657-9f8b-c3d08baad492",
+      "name": "Telegram Trigger",
+      "webhookId": "2d4436d8-22d6-4835-94af-7ff620696232",
+      "credentials": {
+        "telegramApi": {
+          "id": "0tzCMWf9AvOUY1zw",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        20
+      ],
+      "id": "04689d74-2671-4e90-8809-63f9d8112016",
+      "name": "Telegram",
+      "webhookId": "9f3d33c8-d800-4cb6-a06d-7b5b1f8859a5",
+      "credentials": {
+        "telegramApi": {
+          "id": "0tzCMWf9AvOUY1zw",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "leads",
+          "mode": "list",
+          "cachedResultName": "leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telegram_id": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+            "full_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('full_name', ``, 'string') }}",
+            "phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('phone', ``, 'string') }}",
+            "email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email', ``, 'string') }}",
+            "preferred_city": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('preferred_city', ``, 'string') }}",
+            "preferred_country": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('preferred_country', ``, 'string') }}",
+            "budget": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('budget', ``, 'number') }}",
+            "preferred_bedrooms": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('preferred_bedrooms', ``, 'number') }}",
+            "interested_service": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('interested_service', ``, 'string') }}",
+            "last_interaction": "={{ $now }}",
+            "id": 0
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "preferred_city",
+              "displayName": "preferred_city",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "preferred_country",
+              "displayName": "preferred_country",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "budget",
+              "displayName": "budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "preferred_bedrooms",
+              "displayName": "preferred_bedrooms",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "interested_service",
+              "displayName": "interested_service",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_interaction",
+              "displayName": "last_interaction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        1180,
+        200
+      ],
+      "id": "5d25cd5c-db44-493b-8ace-a64a216ed12e",
+      "name": "insert lead new",
+      "credentials": {
+        "postgres": {
+          "id": "HPkuDSDnMQeMsuwi",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "sh868936@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sh868936@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('attendees0_Attendees', `Correo del usuario`, 'string') }}"
+          ],
+          "location": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Location', `Direccion de la reunion`, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        600,
+        380
+      ],
+      "id": "1f124666-86bf-4a1e-9b38-c42424995aef",
+      "name": "Google Calendar1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "DwGh7TTHEBg4V5Pq",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "leads",
+          "mode": "list",
+          "cachedResultName": "leads"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "telegram_id",
+              "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        1080,
+        200
+      ],
+      "id": "8a1e1bf5-2cd9-4eda-9072-c83c2e5b34bf",
+      "name": "Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "HPkuDSDnMQeMsuwi",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Servicio que tiene información de las propiedades y sus caracteristicas",
+        "method": "POST",
+        "url": "https://assitant-v-1-py-1.onrender.com/buscar",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "1234567890-secret-key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "realEstateTypeList",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `ejemplo: apartamento, casa, apartaestudio, oficina`, 'string') }}"
+            },
+            {
+              "name": "realEstateBusinessList",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `ejemplo: venta, arriendo`, 'string') }}"
+            },
+            {
+              "name": "city",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', `Ciudades de colombia`, 'string') }}"
+            },
+            {
+              "name": "roomList",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', `cantidad de cuartos`, 'string') }}"
+            },
+            {
+              "name": "bathroomList",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters4_Value', `cantidad de baños ejemplo: 2`, 'string') }}"
+            },
+            {
+              "name": "page",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters5_Value', `pagina de datos agrupada por 5 valores ejemplo: 1`, 'string') }}"
+            },
+            {
+              "name": "areaRange",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters6_Value', `area maxima en mts2 ejemplo: 200. `, 'string') }}"
+            },
+            {
+              "name": "areaRangeMin",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters7_Value', `area minima en mts2 ejemplo: 100 `, 'string') }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        340
+      ],
+      "id": "27b4d770-3085-4c5d-b069-2951166b8585",
+      "name": "HTTP Request",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "sh868936@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sh868936@gmail.com"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        340,
+        360
+      ],
+      "id": "0286845c-7b5c-49d3-b19a-32cd15b5236f",
+      "name": "Get Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "DwGh7TTHEBg4V5Pq",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "valida disponibilidad horaria para la cita",
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "sh868936@gmail.com",
+          "mode": "list",
+          "cachedResultName": "sh868936@gmail.com"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        380
+      ],
+      "id": "9bda8142-5757-4b0a-8c9f-1365d822a770",
+      "name": "Get Event Availability for Hour:",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "DwGh7TTHEBg4V5Pq",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "insert lead new": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram": {
+      "main": [
+        []
+      ]
+    },
+    "Google Calendar1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Event Availability for Hour:": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "29a43f99-e348-4249-b0f7-dabb2811cfc7",
+  "meta": {
+    "templateId": "self-building-ai-agent",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "80d774bd03b104f5bf2c004c37905f8e2c73f0a7b7ed04ce8d3d75ef5351ed53"
+  },
+  "id": "yPohYUnWYW8tXdHO",
+  "tags": []
+}
